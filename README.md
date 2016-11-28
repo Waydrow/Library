@@ -1,2 +1,3 @@
-# Library
-A Library system - C++ Project
+## 图书管理系统
+
+一个由文件存储实现的图书管理系统, C++编写
