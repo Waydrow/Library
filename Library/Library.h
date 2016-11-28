@@ -11,11 +11,14 @@ using namespace std;
 #define BOOK_FILE				"data/books"
 #define USER_FILE				"data/user"
 #define ADMIN_FILE				"data/admin"
+#define BORROW_FILE				"data/borrow"
 
 // 图书, 用户, 管理员大小
 #define BOOK_SIZE				sizeof(Book)
 #define USER_SIZE				sizeof(User)
 #define ADMIN_SIZE				sizeof(Admin)
+
+#define BORROW_SIZE				sizeof(Borrow)
 
 // 书名, 作者, 简介大小
 #define BOOK_NAME_SIZE			20
@@ -29,6 +32,10 @@ using namespace std;
 #define USER_NAME_SIZE			20
 #define USER_ACCOUNT_SIZE		20
 #define USER_PASSWORD_SIZE		20
+
+// 用户登录, 1表示成功, 0表示失败
+#define IS_USER_LOGIN			1
+#define IS_USER_NOT_LOGIN		0
 
 // 删除后ID置为-1
 #define ID_REMOVE				-1
@@ -102,6 +109,25 @@ struct Book {
 	}
 };
 
+// 借阅类, 存储用户学号和书的id
+struct Borrow {
+	char userAccount[USER_ACCOUNT_SIZE];
+	int bookId;
+
+	Borrow() {}
+	Borrow(char account[], int bookId) {
+		strcpy(this->userAccount, account);
+		this->bookId = bookId;
+	}
+
+	void print() {
+		cout << "-------------------------------" << endl;
+		cout << "学号: " << userAccount << endl;
+		cout << "书名: " << bookId << endl;
+		cout << "-------------------------------" << endl;
+	}
+};
+
 
 class Library {
 private:
@@ -112,7 +138,7 @@ private:
 	*/
 	int bookTotal;
 	int userTotal;
-	int isLogin = 0;
+	int isUserLogin = IS_USER_NOT_LOGIN;
 	User currentUser;
 	// 输入输出流
 	ifstream inFile;
@@ -218,6 +244,49 @@ private:
 		outFile.close();
 	}
 
+	// 写入借阅文件
+	void writeBorrowFile(int bookId) {
+		fstream iofile;
+		iofile.open(BORROW_FILE, ios::in | ios::out | ios::binary | ios::app);
+		if (iofile.fail()) { // 打开失败则创建新文件
+			cout << "创建新的借阅文件成功!" << endl;
+			iofile.close();
+			iofile.open(BORROW_FILE, ios::out | ios::binary);
+			/*User aUser = User(1);
+			userTotal = 1;
+			iofile.write((char*)&aUser, USER_SIZE);*/
+			// 移动位置
+			iofile.seekp(0, ios::beg);
+			Borrow aBorrow = Borrow(currentUser.getAccount(), bookId);
+			iofile.write((char*)&aBorrow, BORROW_SIZE);
+			iofile.close();
+		} else {
+			cout << "成功打开原有的借阅文件!" << endl;
+			// 移动位置
+			//iofile.seekp(ios::end);
+			Borrow aBorrow = Borrow(currentUser.getAccount(), bookId);
+			iofile.write((char*)&aBorrow, BORROW_SIZE);
+			iofile.close();
+		}
+	}
+
+	// 查询某一个用户的借阅记录
+	vector<Borrow> queryBorrowHistoryOneUser(string account) {
+		inFile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
+		vector<Borrow> vec;
+		if (inFile.is_open()) {
+			Borrow aBorrow;
+			while (inFile.read((char*)&aBorrow, BORROW_SIZE)) {
+				string tempAccount(aBorrow.userAccount);
+				if (tempAccount == account) {
+					vec.push_back(aBorrow);
+				}
+			}
+		}
+		inFile.close();
+		return vec;
+	}
+
 	//以图书编号为依据进行查找
 	Book searchBookById(int num) {
 		int flag = 0; // 0代表没查到, 1代表查到
@@ -290,7 +359,7 @@ private:
 				string _account(user.getAccount());
 				string _password(user.getPassword());
 				if (account==_account && password==_password) {
-					isLogin = 1;
+					isUserLogin = IS_USER_LOGIN;
 					currentUser = user;
 					cout << "用户登录成功" << endl;
 					break;
@@ -298,7 +367,7 @@ private:
 			}
 		}
 		inFile.close();
-		if (isLogin == 0) {
+		if (isUserLogin == IS_USER_NOT_LOGIN) {
 			cout << "账号或密码错误" << endl;
 		}
 	}
@@ -394,8 +463,38 @@ public:
 		cin >> flag;
 		if (flag == "y" || flag == "Y") {
 			old_book.canBorrow = BOOK_CANNOT_BORROW; // 图书状态标为借出
-			writeBookFile(old_book, old_book.id);
+			writeBookFile(old_book, old_book.id); // 写入到图书文件
+			writeBorrowFile(old_book.id); // 写入到借阅文件
 			cout << "借书成功 !" << endl;
+		}
+	}
+
+	// 查看借阅记录
+	void displayOneUserBorrowHistory() {
+		vector<Borrow> borrows;
+		string account;
+		// 先判断是否为管理员登录, 是则先输入学号
+		if (!isUserLogin) {
+			cout << "请输入要查询的用户学号: ";
+			cin >> account;
+			if (account.size() >= USER_ACCOUNT_SIZE) {
+				cout << "输入的学号太长啦 !" << endl;
+				return;
+			}
+		} else {
+			account = currentUser.getAccount();
+		}
+
+		borrows = queryBorrowHistoryOneUser(account);
+		if (borrows.empty()) {
+			cout << "还没有借过书哦 !" << endl;
+			return;
+		} else {
+			cout << "共查询到 " << borrows.size() << " 条借阅记录" << endl;
+			vector<Borrow>::iterator it;
+			for (it = borrows.begin(); it != borrows.end(); it++) {
+				(*it).print();
+			}
 		}
 	}
 
@@ -515,7 +614,7 @@ public:
 			return false;
 		}
 		searchUserFileForLogin(account, password);
-		if (isLogin == 1) {
+		if (isUserLogin == IS_USER_LOGIN) {
 			return true;
 		} else {
 			return false;

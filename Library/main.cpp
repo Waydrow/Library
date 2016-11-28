@@ -43,6 +43,7 @@ int main() {
 			cout << "8-----删除用户" << endl;
 			cout << "9-----查看所有用户" << endl;
 			cout << "10----查询用户" << endl;
+			cout << "11----查询用户借阅记录" << endl;
 			cout << "0-----退出" << endl;
 			cout << "--------------------------------" << endl;
 
@@ -68,6 +69,8 @@ int main() {
 				myLib.displayUser();
 			} else if (adminOption == "10") {
 				//myLib.userSearchBook();
+			} else if (adminOption == "11") {
+				myLib.displayOneUserBorrowHistory();
 			} else if (adminOption == "0") {
 				exit(0);
 			} else {
@@ -87,6 +90,7 @@ int main() {
 			cout << "5----删除旧书" << endl;
 			cout << "6----修改图书信息" << endl;
 			cout << "7----查询图书" << endl;
+			cout << "8----查询借阅记录" << endl;
 			cout << "0----退出" << endl;
 			cout << "--------------------------------" << endl;
 
@@ -111,6 +115,8 @@ int main() {
 				myLib.changeBook();
 			} else if (option == "7") {
 				myLib.userSearchBook();
+			} else if (option == "8") {
+				myLib.displayOneUserBorrowHistory();
 			} else if (option == "0") {
 				exit(0);
 			} else {
