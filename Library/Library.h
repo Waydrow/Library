@@ -4,8 +4,10 @@
 #include <string.h>
 #include <vector>
 #include <limits>
+#include <ctime>
 #include "User.h"
 #include "Admin.h"
+#include "Tools.h"
 using namespace std;
 
 #define BOOK_FILE				"data/books"
@@ -40,13 +42,22 @@ using namespace std;
 // 删除后ID置为-1
 #define ID_REMOVE				-1
 
-// 借阅文件中, 记录是否已归还或续借
+// 借阅文件中, 记录是否已归还或续借或超期
 #define IS_BACK					1
 #define IS_NOT_BACK				0
 #define IS_BORROW_AGAIN			2
+#define IS_OVER_TIME			3
+
+// 续借次数上限
+#define BORROW_AGAIN_LIMITS		1
 
 // 查询用户时无法对象无法返回NULL, 取其id代替
 #define ID_NOT_FOUND			-999
+
+// 一次的借书期限 20s, 续借后+20s, 变为40s
+#define TIME_LIMITS				20
+
+
 
 struct Book {
 	// 自增, 唯一标识
@@ -119,8 +130,16 @@ struct Borrow {
 	int id;
 	char userAccount[USER_ACCOUNT_SIZE];
 	int bookId;
-	// isBack表示是否归还, 0未归, 1归还, 2续借
+	// isBack表示是否归还, 0未归, 1归还, 2续借, 3超期
 	int isBack = IS_NOT_BACK;
+	// 借书时间
+	time_t borrowTime;
+	// 理应归还时间
+	time_t backTheoryTime;
+	// 实际归还时间
+	time_t backActualTime;
+	// 续借次数
+	int borrowAgainTimes = 0;
 
 	Borrow() {}
 	Borrow(int id) {
@@ -132,25 +151,38 @@ struct Borrow {
 		this->id = id;
 		strcpy(this->userAccount, account);
 		this->bookId = bookId;
+		this->borrowTime = time(NULL); // 获取借书时间
+		this->backTheoryTime = this->borrowTime + TIME_LIMITS;
 	}
 
 	void print() {
 		cout << "-------------------------------" << endl;
 		cout << "学号: " << userAccount << endl;
 		cout << "书名: " << bookId << endl;
+		cout << "借书时间: ";
+		Tools::printTime(borrowTime);
+		if (isBack != IS_BACK) {
+			cout << "应还日期: ";
+			Tools::printTime(backTheoryTime);
+		}
+		cout << "续借次数: " << borrowAgainTimes << endl;
 		cout << "状态: ";
 		switch (isBack) {
 			case IS_BACK:
-				cout << "已归还";
+				cout << "已归还" << endl;
+				cout << "归还时间: ";
+				Tools::printTime(backActualTime);
 				break;
 			case IS_NOT_BACK:
-				cout << "未归还";
+				cout << "未归还" << endl;
 				break;
 			case IS_BORROW_AGAIN:
-				cout << "已续借";
+				cout << "已续借" << endl;
+				break;
+			case IS_OVER_TIME:
+				cout << "已超期" << endl;
 				break;
 		}
-		cout << endl;
 		cout << "-------------------------------" << endl;
 	}
 };
@@ -447,6 +479,33 @@ private:
 			cout << "账号或密码错误" << endl;
 		}
 	}
+
+	// 用户登录后查询超期图书, 并更新图书状态
+	vector<Borrow> searchOverTimeBorrowBooks(string account) {
+		fstream ioFile;
+		ioFile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
+		vector<Borrow> vec;
+		if (ioFile.is_open()) {
+			Borrow aBorrow;
+			while (ioFile.read((char*)&aBorrow, BORROW_SIZE)) {
+				string tempAccount(aBorrow.userAccount);
+				if (account == tempAccount) {
+					// 获取当前时间, 和理应归还日期进行比对
+					time_t nowTime = time(NULL);
+					if (aBorrow.isBack != IS_BACK && nowTime >= aBorrow.backTheoryTime) {
+						aBorrow.isBack = IS_OVER_TIME;
+						vec.push_back(aBorrow);
+						ioFile.seekp(aBorrow.id * BORROW_SIZE, ios::beg);
+						ioFile.write((char*)&aBorrow, BORROW_SIZE);
+						ioFile.seekg((aBorrow.id + 1)*BORROW_SIZE, ios::beg);
+					}
+				}
+			}
+		}
+		ioFile.close();
+		return vec;
+	}
+
 public:
 	Library() {
 		loadSystemBooks();
@@ -634,9 +693,52 @@ public:
 		if (flag == "y" || flag == "Y") {
 			old_book.canBorrow = BOOK_CAN_BORROW;
 			writeBookFile(old_book, old_book.id);
+			// 还书标志
 			aBorrow.isBack = IS_BACK;
+			// 记录下还书时间
+			aBorrow.backActualTime = time(NULL);
 			writeBorrowFile(aBorrow, aBorrow.id);
 			cout << "还书成功 !" << endl;
+		}
+	}
+
+	// 续借图书
+	void borrowAgain() {
+		cout << "请输入要续借的图书编号：";
+		int num;
+		cin >> num;
+		//通过编号找到这本书的记录
+		Book old_book = searchBookById(num);
+		if (old_book == NULL) {
+			cout << "未找到对应的书, 请重试 !" << endl;
+			return;
+		}
+		if (old_book.canBorrow == BOOK_CAN_BORROW) {
+			cout << "这本书还未被借出哦 !" << endl;
+			return;
+		}
+		string account = currentUser.getAccount();
+		Borrow aBorrow = queryBorrowByUserAndBook(account, num);
+		if (aBorrow.id == ID_NOT_FOUND) {
+			cout << "你还没有借过这本书哦 !" << endl;
+			return;
+		}
+		if (aBorrow.borrowAgainTimes == BORROW_AGAIN_LIMITS) {
+			cout << "每本书最多只可续借一次 !" << endl;
+			return;
+		}
+		string flag;
+		cout << "确认续借这本书吗?(y/n): ";
+		cin >> flag;
+		if (flag == "y" || flag == "Y") {
+			// 续借标志
+			aBorrow.isBack = IS_BORROW_AGAIN;
+			// 续借次数++
+			aBorrow.borrowAgainTimes++;
+			// 更新理应还书时间
+			aBorrow.backTheoryTime += TIME_LIMITS;
+			writeBorrowFile(aBorrow, aBorrow.id);
+			cout << "续借成功 !" << endl;
 		}
 	}
 
@@ -703,6 +805,14 @@ public:
 		}
 		searchUserFileForLogin(account, password);
 		if (isUserLogin == IS_USER_LOGIN) {
+			// 查询超期图书
+			vector<Borrow> vec = searchOverTimeBorrowBooks(account);
+			if (!vec.empty()) {
+				cout << "你有 " << vec.size() << " 本图书已超期, 请即时归还或续借 !" << endl;
+				for (vector<Borrow>::size_type ix = 0; ix != vec.size(); ix++) {
+					vec[ix].print();
+				}
+			}
 			return true;
 		} else {
 			return false;

@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="Admin.h" />
     <ClInclude Include="Library.h" />
+    <ClInclude Include="Tools.h" />
     <ClInclude Include="User.h" />
   </ItemGroup>
   <ItemGroup>

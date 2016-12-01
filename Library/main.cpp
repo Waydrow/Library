@@ -83,41 +83,35 @@ int main() {
 		while (true) {
 			cout << "请选择操作" << endl;
 			cout << "--------------------------------" << endl;
-			cout << "1----新书入库" << endl;
-			cout << "2----查看库存" << endl;
+			cout << "1----查看库存" << endl;
+			cout << "2----查询图书" << endl;
 			cout << "3----借阅" << endl;
 			cout << "4----归还" << endl;
-			cout << "5----删除旧书" << endl;
-			cout << "6----修改图书信息" << endl;
-			cout << "7----查询图书" << endl;
-			cout << "8----查询借阅记录" << endl;
+			cout << "5----续借" << endl;
+			cout << "6----查询借阅记录" << endl;
 			cout << "0----退出" << endl;
 			cout << "--------------------------------" << endl;
 
-			string option;
-			cin >> option;
+			string userOption;
+			cin >> userOption;
 
 			/*
 			此处不可用switch case来判断, 因为c++中不支持case string
 			option不用int或char的原因为防止用户恶意输入, 进行容错处理
 			*/
-			if (option == "1") {
-				myLib.addBook();
-			} else if (option == "2") {
+			if (userOption == "1") {
 				myLib.displayBook();
-			} else if (option == "3") {
-				myLib.lendBook();
-			} else if (option == "4") {
-				myLib.backBook();
-			} else if (option == "5") {
-				myLib.removeBook();
-			} else if (option == "6") {
-				myLib.changeBook();
-			} else if (option == "7") {
+			} else if (userOption == "2") {
 				myLib.userSearchBook();
-			} else if (option == "8") {
+			} else if (userOption == "3") {
+				myLib.lendBook();
+			} else if (userOption == "4") {
+				myLib.backBook();
+			} else if (userOption == "5") {
+				myLib.borrowAgain();
+			} else if (userOption == "6") {
 				myLib.displayOneUserBorrowHistory();
-			} else if (option == "0") {
+			} else if (userOption == "0") {
 				exit(0);
 			} else {
 				continue;
