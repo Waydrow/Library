@@ -40,6 +40,11 @@ using namespace std;
 // 删除后ID置为-1
 #define ID_REMOVE				-1
 
+// 借阅文件中, 记录是否已归还或续借
+#define IS_BACK					1
+#define IS_NOT_BACK				0
+#define IS_BORROW_AGAIN			2
+
 // 查询用户时无法对象无法返回NULL, 取其id代替
 #define ID_NOT_FOUND			-999
 
@@ -61,9 +66,9 @@ struct Book {
 		this->canBorrow = BOOK_CAN_BORROW;
 	}
 	//完整初始化
-	Book(int id, char name[BOOK_NAME_SIZE], 
+	Book(int id, char name[BOOK_NAME_SIZE],
 		char author[BOOK_AUTHOR_SIZE], char introduction[BOOK_INTRO_SIZE]) {
-		
+
 		this->id = id;
 		strcpy(this->name, name);
 		strcpy(this->author, author);
@@ -111,11 +116,20 @@ struct Book {
 
 // 借阅类, 存储用户学号和书的id
 struct Borrow {
+	int id;
 	char userAccount[USER_ACCOUNT_SIZE];
 	int bookId;
+	// isBack表示是否归还, 0未归, 1归还, 2续借
+	int isBack = IS_NOT_BACK;
 
 	Borrow() {}
-	Borrow(char account[], int bookId) {
+	Borrow(int id) {
+		this->id = id;
+		strcpy(this->userAccount, "");
+		this->bookId = 0;
+	}
+	Borrow(int id, char account[], int bookId) {
+		this->id = id;
 		strcpy(this->userAccount, account);
 		this->bookId = bookId;
 	}
@@ -124,6 +138,19 @@ struct Borrow {
 		cout << "-------------------------------" << endl;
 		cout << "学号: " << userAccount << endl;
 		cout << "书名: " << bookId << endl;
+		cout << "状态: ";
+		switch (isBack) {
+			case IS_BACK:
+				cout << "已归还";
+				break;
+			case IS_NOT_BACK:
+				cout << "未归还";
+				break;
+			case IS_BORROW_AGAIN:
+				cout << "已续借";
+				break;
+		}
+		cout << endl;
 		cout << "-------------------------------" << endl;
 	}
 };
@@ -138,6 +165,7 @@ private:
 	*/
 	int bookTotal;
 	int userTotal;
+	int borrowTotal;
 	int isUserLogin = IS_USER_NOT_LOGIN;
 	User currentUser;
 	// 输入输出流
@@ -168,6 +196,20 @@ private:
 			cout << "修改userTotal成功" << endl;
 		} else {
 			cout << "修改userTotal失败" << endl;
+		}
+		outFile.close();
+	}
+
+	// 记录下改变后的borrowTotal值, 即将borrowTotal写入借阅文件中第一条记录的id中
+	void writeBorrowTotal() {
+		outFile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
+		if (outFile.is_open()) {
+			outFile.seekp(0, ios::beg);
+			Borrow aBorrow = Borrow(borrowTotal);
+			outFile.write((char*)&aBorrow, BORROW_SIZE);
+			cout << "修改borrowTotal成功" << endl;
+		} else {
+			cout << "修改borrowTotal失败" << endl;
 		}
 		outFile.close();
 	}
@@ -222,6 +264,31 @@ private:
 		cout << "系统初始化用户信息成功 !" << endl;
 	}
 
+	// 系统进行借阅信息初始化
+	void loadSystemBorrows() {
+		fstream iofile;
+		iofile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
+		if (iofile.fail()) { // 打开失败则创建新文件, 并写入borrowTotal
+			cout << "创建新的借阅文件成功!" << endl;
+			iofile.close();
+			iofile.open(BORROW_FILE, ios::out | ios::binary);
+			Borrow aBorrow = Borrow(1);
+			borrowTotal = 1;
+			iofile.write((char*)&aBorrow, BORROW_SIZE);
+			iofile.close();
+		} else {
+			cout << "成功打开原有的借阅文件!" << endl;
+			// 移动到文件开头位置
+			iofile.seekg(0, ios::beg);
+			Borrow aBorrow;
+			iofile.read((char*)&aBorrow, BORROW_SIZE);
+			// 获取第一个借阅的id, 赋值给borrowTotal
+			borrowTotal = aBorrow.id;
+			iofile.close();
+		}
+		cout << "系统初始化借阅信息成功 !" << endl;
+	}
+
 	//写入图书文件
 	void writeBookFile(Book aBook, int location) {
 		outFile.open(BOOK_FILE, ios::in | ios::out | ios::binary);
@@ -245,29 +312,14 @@ private:
 	}
 
 	// 写入借阅文件
-	void writeBorrowFile(int bookId) {
-		fstream iofile;
-		iofile.open(BORROW_FILE, ios::in | ios::out | ios::binary | ios::app);
-		if (iofile.fail()) { // 打开失败则创建新文件
-			cout << "创建新的借阅文件成功!" << endl;
-			iofile.close();
-			iofile.open(BORROW_FILE, ios::out | ios::binary);
-			/*User aUser = User(1);
-			userTotal = 1;
-			iofile.write((char*)&aUser, USER_SIZE);*/
-			// 移动位置
-			iofile.seekp(0, ios::beg);
-			Borrow aBorrow = Borrow(currentUser.getAccount(), bookId);
-			iofile.write((char*)&aBorrow, BORROW_SIZE);
-			iofile.close();
-		} else {
-			cout << "成功打开原有的借阅文件!" << endl;
-			// 移动位置
-			//iofile.seekp(ios::end);
-			Borrow aBorrow = Borrow(currentUser.getAccount(), bookId);
-			iofile.write((char*)&aBorrow, BORROW_SIZE);
-			iofile.close();
+	void writeBorrowFile(Borrow aBorrow, int location) {
+		outFile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
+		if (outFile.is_open()) {
+			// 写入到location位置, 即将文件指针从0移动 location 个 borrow_size
+			outFile.seekp(location*BORROW_SIZE, ios::beg);
+			outFile.write((char*)&aBorrow, BORROW_SIZE);
 		}
+		outFile.close();
 	}
 
 	// 查询某一个用户的借阅记录
@@ -276,6 +328,8 @@ private:
 		vector<Borrow> vec;
 		if (inFile.is_open()) {
 			Borrow aBorrow;
+			// 从第二条记录开始查询
+			inFile.seekg(BORROW_SIZE, ios::beg);
 			while (inFile.read((char*)&aBorrow, BORROW_SIZE)) {
 				string tempAccount(aBorrow.userAccount);
 				if (tempAccount == account) {
@@ -286,8 +340,30 @@ private:
 		inFile.close();
 		return vec;
 	}
+	
+	// 查询特定用户特定图书的借书记录
+	Borrow queryBorrowByUserAndBook(string account, int bookId) {
+		inFile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
+		int flag = 0;
+		Borrow aBorrow;
+		if (inFile.is_open()) {
+			inFile.seekg(BORROW_SIZE, ios::beg);
+			while (inFile.read((char*)&aBorrow, BORROW_SIZE)) {
+				string tempAccount(aBorrow.userAccount);
+				if (tempAccount == account && aBorrow.bookId == bookId) {
+					flag = 1;
+					break;
+				}
+			}
+		}
+		inFile.close();
+		if (flag == 0) {
+			aBorrow.id = ID_NOT_FOUND;
+		}
+		return aBorrow;
+	}
 
-	//以图书编号为依据进行查找
+	//以图书编号为依据进行查找图书信息
 	Book searchBookById(int num) {
 		int flag = 0; // 0代表没查到, 1代表查到
 		inFile.open(BOOK_FILE, ios::binary);
@@ -310,7 +386,7 @@ private:
 		}
 	}
 
-	// 以用户学号为依据进行查找
+	// 以用户学号为依据进行查找用户信息
 	User searchUserByAccount(string _account) {
 		int flag = 0;
 		User aUser;
@@ -326,7 +402,7 @@ private:
 			}
 		}
 		inFile.close();
-		if(flag == 0) {
+		if (flag == 0) {
 			aUser.setId(ID_NOT_FOUND);
 		}
 		return aUser;
@@ -358,7 +434,7 @@ private:
 			while (inFile.read((char*)&user, USER_SIZE)) {
 				string _account(user.getAccount());
 				string _password(user.getPassword());
-				if (account==_account && password==_password) {
+				if (account == _account && password == _password) {
 					isUserLogin = IS_USER_LOGIN;
 					currentUser = user;
 					cout << "用户登录成功" << endl;
@@ -375,6 +451,7 @@ public:
 	Library() {
 		loadSystemBooks();
 		loadSystemUsers();
+		loadSystemBorrows();
 	}
 
 	//增加图书
@@ -396,7 +473,7 @@ public:
 	//查看图书库存
 	void displayBook() {
 		cout << "这是现在的库存信息：" << endl;
-		inFile.open(BOOK_FILE, ios::in | ios::binary);
+		inFile.open(BOOK_FILE, ios::in | ios::out | ios::binary);
 		if (inFile.is_open()) {
 			Book aBook;
 			while (inFile.read((char*)&aBook, BOOK_SIZE)) {
@@ -464,7 +541,10 @@ public:
 		if (flag == "y" || flag == "Y") {
 			old_book.canBorrow = BOOK_CANNOT_BORROW; // 图书状态标为借出
 			writeBookFile(old_book, old_book.id); // 写入到图书文件
-			writeBorrowFile(old_book.id); // 写入到借阅文件
+			Borrow aBorrow = Borrow(borrowTotal, currentUser.getAccount(), old_book.id);
+			writeBorrowFile(aBorrow, borrowTotal); // 写入到借阅文件
+			borrowTotal++;
+			writeBorrowTotal();
 			cout << "借书成功 !" << endl;
 		}
 	}
@@ -526,7 +606,7 @@ public:
 		cout << "这本书的信息已修改为：" << endl;
 		new_book.print();
 	}
-	
+
 	//归还图书
 	void backBook() {
 		cout << "请输入要归还的图书编号：";
@@ -539,7 +619,13 @@ public:
 			return;
 		}
 		if (old_book.canBorrow == BOOK_CAN_BORROW) {
-			cout << "你还没有借这本书哦 !" << endl;
+			cout << "这本书还未被借出哦 !" << endl;
+			return;
+		}
+		string account = currentUser.getAccount();
+		Borrow aBorrow = queryBorrowByUserAndBook(account, num);
+		if (aBorrow.id == ID_NOT_FOUND) {
+			cout << "你还没有借过这本书哦 !" << endl;
 			return;
 		}
 		string flag;
@@ -548,6 +634,8 @@ public:
 		if (flag == "y" || flag == "Y") {
 			old_book.canBorrow = BOOK_CAN_BORROW;
 			writeBookFile(old_book, old_book.id);
+			aBorrow.isBack = IS_BACK;
+			writeBorrowFile(aBorrow, aBorrow.id);
 			cout << "还书成功 !" << endl;
 		}
 	}
@@ -707,7 +795,7 @@ public:
 			cout << "未找到对应的用户, 请重试 !" << endl;
 			return;
 		}
-		
+
 		cout << "这是这个用户的当前信息：" << endl;
 		old_user.print();
 		cout << "请输入修改后的用户信息（密码 姓名）" << endl;
@@ -729,5 +817,5 @@ public:
 		new_user.print();
 	}
 
-	
+
 };
