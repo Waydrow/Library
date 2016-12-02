@@ -9,6 +9,9 @@ bool isUserLogin;
 bool isAdminLogin;
 
 int main() {
+	// Tools::writeTestBooks();
+	// Tools::writeTestUsers();
+
 	Library myLib = Library();
 	while (true) {
 		string loginOption;
@@ -44,6 +47,8 @@ int main() {
 			cout << "9-----查看所有用户" << endl;
 			cout << "10----查询用户" << endl;
 			cout << "11----查询用户借阅记录" << endl;
+			cout << "12----批量读入图书文件" << endl;
+			cout << "13----批量读入用户文件" << endl;
 			cout << "0-----退出" << endl;
 			cout << "--------------------------------" << endl;
 
@@ -68,9 +73,13 @@ int main() {
 			} else if (adminOption == "9") {
 				myLib.displayUser();
 			} else if (adminOption == "10") {
-				//myLib.userSearchBook();
+				myLib.searchUser();
 			} else if (adminOption == "11") {
 				myLib.displayOneUserBorrowHistory();
+			} else if (adminOption == "12") {
+				myLib.readTestBooks();
+			} else if (adminOption == "13") {
+				myLib.readTestUsers();
 			} else if (adminOption == "0") {
 				exit(0);
 			} else {

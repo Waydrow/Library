@@ -131,7 +131,7 @@ struct Borrow {
 	char userAccount[USER_ACCOUNT_SIZE];
 	int bookId;
 	// isBack表示是否归还, 0未归, 1归还, 2续借, 3超期
-	int isBack = IS_NOT_BACK;
+	int isBack;
 	// 借书时间
 	time_t borrowTime;
 	// 理应归还时间
@@ -139,7 +139,7 @@ struct Borrow {
 	// 实际归还时间
 	time_t backActualTime;
 	// 续借次数
-	int borrowAgainTimes = 0;
+	int borrowAgainTimes;
 
 	Borrow() {}
 	Borrow(int id) {
@@ -153,6 +153,8 @@ struct Borrow {
 		this->bookId = bookId;
 		this->borrowTime = time(NULL); // 获取借书时间
 		this->backTheoryTime = this->borrowTime + TIME_LIMITS;
+		this->isBack = IS_NOT_BACK;
+		this->borrowAgainTimes = 0;
 	}
 
 	void print() {
@@ -187,6 +189,8 @@ struct Borrow {
 	}
 };
 
+ifstream inFile;
+ofstream outFile;
 
 class Library {
 private:
@@ -198,11 +202,10 @@ private:
 	int bookTotal;
 	int userTotal;
 	int borrowTotal;
-	int isUserLogin = IS_USER_NOT_LOGIN;
+	int isUserLogin;
 	User currentUser;
 	// 输入输出流
-	ifstream inFile;
-	ofstream outFile;
+
 
 	// 记录下改变后的bookTotal值, 即将bookTotal写入图书文件中第一条记录的id中
 	void writeBookTotal() {
@@ -364,7 +367,7 @@ private:
 			inFile.seekg(BORROW_SIZE, ios::beg);
 			while (inFile.read((char*)&aBorrow, BORROW_SIZE)) {
 				string tempAccount(aBorrow.userAccount);
-				if (tempAccount == account) {
+				if (tempAccount.compare(account) == 0) {
 					vec.push_back(aBorrow);
 				}
 			}
@@ -372,7 +375,7 @@ private:
 		inFile.close();
 		return vec;
 	}
-	
+
 	// 查询特定用户特定图书的借书记录
 	Borrow queryBorrowByUserAndBook(string account, int bookId) {
 		inFile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
@@ -411,11 +414,10 @@ private:
 			}
 		}
 		inFile.close();
-		if (flag == 1) {
-			return aBook;
-		} else {
-			return NULL;
+		if (flag == 0) {
+			aBook.id = ID_NOT_FOUND;
 		}
+		return aBook;
 	}
 
 	// 以用户学号为依据进行查找用户信息
@@ -508,9 +510,10 @@ private:
 
 public:
 	Library() {
-		loadSystemBooks();
+        loadSystemBooks();
 		loadSystemUsers();
 		loadSystemBorrows();
+		this->isUserLogin = IS_USER_NOT_LOGIN;
 	}
 
 	//增加图书
@@ -551,7 +554,7 @@ public:
 		int num;
 		cin >> num;
 		Book old_book = searchBookById(num);//通过编号找到这本书的记录
-		if (old_book == NULL) {
+		if (old_book.id == ID_NOT_FOUND) {
 			cout << "未找到对应的书, 请重试 !" << endl;
 			return;
 		}
@@ -585,7 +588,7 @@ public:
 		}
 		//通过编号找到这本书的记录
 		Book old_book = searchBookById(num);
-		if (old_book == NULL) {
+		if (old_book.id == ID_NOT_FOUND) {
 			cout << "未找到对应的书, 请重试 !" << endl;
 			return;
 		}
@@ -643,7 +646,7 @@ public:
 		int num;
 		cin >> num;
 		Book old_book = searchBookById(num);
-		if (old_book == NULL) {
+		if (old_book.id == ID_NOT_FOUND) {
 			cout << "未找到对应的书, 请重试 !" << endl;
 			return;
 		}
@@ -673,7 +676,7 @@ public:
 		cin >> num;
 		//通过编号找到这本书的记录
 		Book old_book = searchBookById(num);
-		if (old_book == NULL) {
+		if (old_book.id == ID_NOT_FOUND) {
 			cout << "未找到对应的书, 请重试 !" << endl;
 			return;
 		}
@@ -709,7 +712,7 @@ public:
 		cin >> num;
 		//通过编号找到这本书的记录
 		Book old_book = searchBookById(num);
-		if (old_book == NULL) {
+		if (old_book.id == ID_NOT_FOUND) {
 			cout << "未找到对应的书, 请重试 !" << endl;
 			return;
 		}
@@ -925,6 +928,66 @@ public:
 		writeUserFile(new_user, old_user.getId());
 		cout << "这个用户的信息已修改为：" << endl;
 		new_user.print();
+	}
+
+	// 查询用户
+	void searchUser() {
+		cout << "请输入要查找的用户学号：";
+		string account;
+		cin >> account;
+		if (account.size() >= USER_ACCOUNT_SIZE) {
+			cout << "学号太长啦 !" << endl;
+			return;
+		}
+		User old_user = searchUserByAccount(account);
+		if (old_user.getId() == ID_NOT_FOUND) {
+			cout << "未找到对应的用户, 请重试 !" << endl;
+			return;
+		}
+
+		cout << "这是这个用户的当前信息：" << endl;
+		old_user.print();
+	}
+
+	// 批量读入图书数据
+	void readTestBooks() {
+		ifstream ifs;
+		ifs.open("data/book_test.txt");
+		int count = 0;
+		if (ifs.is_open()) {
+			while (!ifs.eof()) {
+				Book aBook;
+				ifs >> aBook.name >> aBook.author >> aBook.introduction;
+				aBook.id = bookTotal;
+				aBook.canBorrow = BOOK_CAN_BORROW;
+				writeBookFile(aBook, bookTotal);
+				bookTotal++;
+				count++;
+			}
+		}
+		ifs.close();
+		writeBookTotal();
+		cout << "共读入了 " << count << " 本图书" << endl;
+	}
+
+	// 批量读入图书数据
+	void readTestUsers() {
+		ifstream ifs;
+		ifs.open("data/user_test.txt");
+		int count = 0;
+		if (ifs.is_open()) {
+			while (!ifs.eof()) {
+				string account, password, name;
+				ifs >> account >> password >> name;
+				User aUser = User(userTotal, account, password, name);
+				writeUserFile(aUser, userTotal);
+				userTotal++;
+				count++;
+			}
+		}
+		ifs.close();
+		writeUserTotal();
+		cout << "共读入了 " << count << " 个用户" << endl;
 	}
 
 
