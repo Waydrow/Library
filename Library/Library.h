@@ -5,6 +5,7 @@
 #include <vector>
 #include <limits>
 #include <ctime>
+#include <conio.h>
 #include "User.h"
 #include "Admin.h"
 #include "Tools.h"
@@ -160,7 +161,7 @@ struct Borrow {
 	void print() {
 		cout << "-------------------------------" << endl;
 		cout << "学号: " << userAccount << endl;
-		cout << "书名: " << bookId << endl;
+		cout << "书号: " << bookId << endl;
 		cout << "借书时间: ";
 		Tools::printTime(borrowTime);
 		if (isBack != IS_BACK) {
@@ -776,13 +777,31 @@ public:
 			return false;
 		}
 		cout << "请输入管理员密码: " << endl;
-		string password;
-		cin >> password;
-		if (password.size() >= USER_PASSWORD_SIZE) {
+		int count = 0;
+		char password[USER_PASSWORD_SIZE];
+		char c;
+		while (((c = getch())!= '\r') && count < USER_PASSWORD_SIZE-1) {
+			if (c != 8) {
+				putchar('*');
+				password[count] = c;
+				count++;
+			} else {
+				if (count == 0) {
+					continue;
+				}
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				count--;
+			}
+		}
+		password[count] = '\0';
+		cout << endl;
+		if (count >= USER_PASSWORD_SIZE) {
 			cout << "密码太长啦 !" << endl;
 			return false;
 		}
-		if (account == "222" && password == "222") {
+		if (account == "222" && !strcmp(password, "222")) {
 			cout << "登录成功 !" << endl;
 			return true;
 		} else {
@@ -887,7 +906,7 @@ public:
 		cout << "确认删除这个用户吗?(y/n): ";
 		cin >> choice;
 		if (choice == "y" || choice == "Y") {
-			User aUser = User(ID_REMOVE, '\0', '\0', '\0');
+			User aUser = User(ID_REMOVE);
 			writeUserFile(aUser, old_user.getId());
 			cout << "删除成功 !" << endl;
 		}
