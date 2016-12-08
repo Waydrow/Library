@@ -359,7 +359,7 @@ private:
 
 	// 查询某一个用户的借阅记录
 	vector<Borrow> queryBorrowHistoryOneUser(string account) {
-		inFile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
+		inFile.open(BORROW_FILE, ios::binary);
 		vector<Borrow> vec;
 		if (inFile.is_open()) {
 			Borrow aBorrow;
@@ -367,7 +367,7 @@ private:
 			inFile.seekg(BORROW_SIZE, ios::beg);
 			while (inFile.read((char*)&aBorrow, BORROW_SIZE)) {
 				string tempAccount(aBorrow.userAccount);
-				if (tempAccount.compare(account) == 0) {
+				if (tempAccount == account) {
 					vec.push_back(aBorrow);
 				}
 			}
@@ -970,7 +970,7 @@ public:
 		cout << "共读入了 " << count << " 本图书" << endl;
 	}
 
-	// 批量读入图书数据
+	// 批量读入用户数据
 	void readTestUsers() {
 		ifstream ifs;
 		ifs.open("data/user_test.txt");
