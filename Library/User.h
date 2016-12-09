@@ -36,7 +36,6 @@ public:
 		strcpy(this->name, "");
 	}
 
-
 	User() {
 
 	}

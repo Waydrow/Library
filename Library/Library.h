@@ -659,6 +659,11 @@ public:
 		//显示这本书之前的信息
 		old_book.print();
 		cout << "请输入修改后的图书信息（书名 作者 简介）" << endl;
+		/*
+		string name;
+		string author;
+		string introduction;
+		*/
 		char name[BOOK_NAME_SIZE];
 		char author[BOOK_AUTHOR_SIZE];
 		char introduction[BOOK_INTRO_SIZE];
@@ -770,38 +775,16 @@ public:
 	// 管理员登录
 	bool adminLogin() {
 		cout << "请输入管理员帐号: " << endl;
-		string account;
-		cin >> account;
-		if (account.size() >= USER_ACCOUNT_SIZE) {
-			cout << "帐号太长啦!" << endl;
+		char account[USER_ACCOUNT_SIZE];
+		if (!Tools::inputAccount(account, USER_ACCOUNT_SIZE)) {
 			return false;
 		}
 		cout << "请输入管理员密码: " << endl;
-		int count = 0;
 		char password[USER_PASSWORD_SIZE];
-		char c;
-		while (((c = getch())!= '\r') && count < USER_PASSWORD_SIZE-1) {
-			if (c != 8) {
-				putchar('*');
-				password[count] = c;
-				count++;
-			} else {
-				if (count == 0) {
-					continue;
-				}
-				putchar('\b');
-				putchar(' ');
-				putchar('\b');
-				count--;
-			}
-		}
-		password[count] = '\0';
-		cout << endl;
-		if (count >= USER_PASSWORD_SIZE) {
-			cout << "密码太长啦 !" << endl;
+		if (!Tools::inputPassword(password, USER_PASSWORD_SIZE)) {
 			return false;
 		}
-		if (account == "222" && !strcmp(password, "222")) {
+		if (!strcmp(account, "222") && !strcmp(password, "222")) {
 			cout << "登录成功 !" << endl;
 			return true;
 		} else {
@@ -812,17 +795,13 @@ public:
 	// 用户登录
 	bool userLogin() {
 		cout << "请输入学号: " << endl;
-		string account;
-		cin >> account;
-		if (account.size() >= USER_ACCOUNT_SIZE) {
-			cout << "帐号太长啦!" << endl;
+		char account[USER_ACCOUNT_SIZE];
+		if (!Tools::inputAccount(account, USER_PASSWORD_SIZE)) {
 			return false;
 		}
 		cout << "请输入用户密码: " << endl;
-		string password;
-		cin >> password;
-		if (password.size() >= USER_PASSWORD_SIZE) {
-			cout << "密码太长啦 !" << endl;
+		char password[USER_PASSWORD_SIZE];
+		if (!Tools::inputPassword(password, USER_PASSWORD_SIZE)) {
 			return false;
 		}
 		searchUserFileForLogin(account, password);
@@ -843,26 +822,59 @@ public:
 
 	//添加用户
 	void addUser() {
-		cout << "请输入用户信息(学号, 密码, 姓名)" << endl;
-		string account, password, name;
-		cin >> account >> password >> name;
-		if (account.size() >= USER_ACCOUNT_SIZE) {
-			cout << "学号太长啦 !" << endl;
-			return;
+		cout << "请输入用户信息(学号, 密码, 姓名)(每项少于20位)" << endl;
+		char account[USER_ACCOUNT_SIZE];
+		char password[USER_PASSWORD_SIZE];
+		string name;
+		User new_user;
+		while (true) {
+			cout << "请输入学号(输入0返回): ";
+			if (!Tools::inputAccount(account, USER_ACCOUNT_SIZE)) {
+				continue;
+			}
+			if (!Tools::isNumber(account)) {
+				cout << "学号只能输入数字哦 !" << endl;
+				continue;
+			}
+			new_user = searchUserByAccount(account);
+			if (new_user.getId() != ID_NOT_FOUND) {
+				cout << "学号已存在 !" << endl;
+				continue;
+			}
+			if (!strcmp(account, "0")) {
+				return;
+			}
+			break;
 		}
-		if (password.size() >= USER_PASSWORD_SIZE) {
-			cout << "密码太长啦 !" << endl;
-			return;
+		while (true) {
+			cout << "请输入密码(不少于3位, 输入0返回): ";
+			if (!Tools::inputPassword(password, USER_PASSWORD_SIZE)) {
+				continue;
+			}
+			if (!strcmp(password, "0")) {
+				return;
+			}
+			if(strlen(password) < 3) {
+				cout << "密码最少3位哦 !" << endl;
+				continue;
+			}
+			break;
 		}
-		if (name.size() >= USER_NAME_SIZE) {
-			cout << "姓名太长啦 !" << endl;
-			return;
+		name = "\n";
+		getline(cin, name);
+		while (true) {
+			cout << "请输入姓名(输入0返回): ";
+			getline(cin, name);
+			if (name == "0") {
+				return;
+			}
+			if (name.size() >= USER_NAME_SIZE) {
+				cout << "姓名太长啦 !" << endl;
+				continue;
+			}
+			break;
 		}
-		User new_user = searchUserByAccount(account);
-		if (new_user.getId() != ID_NOT_FOUND) {
-			cout << "学号已存在 !" << endl;
-			return;
-		}
+		
 		new_user = User(userTotal, account, password, name);
 		writeUserFile(new_user, userTotal);
 		cout << "添加成功，信息如下：" << endl;
@@ -951,12 +963,20 @@ public:
 
 	// 查询用户
 	void searchUser() {
-		cout << "请输入要查找的用户学号：";
-		string account;
-		cin >> account;
-		if (account.size() >= USER_ACCOUNT_SIZE) {
-			cout << "学号太长啦 !" << endl;
-			return;
+		char account[USER_ACCOUNT_SIZE];
+		while (true) {
+			cout << "请输入要查找的用户学号(输入0返回): ";
+			if (!Tools::inputAccount(account, USER_ACCOUNT_SIZE)) {
+				continue;
+			}
+			if (!Tools::isNumber(account)) {
+				cout << "学号只能输入数字哦 !" << endl;
+				continue;
+			}
+			if (!strcmp(account, "0")) {
+				return;
+			}
+			break;
 		}
 		User old_user = searchUserByAccount(account);
 		if (old_user.getId() == ID_NOT_FOUND) {

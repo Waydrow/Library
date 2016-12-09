@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <ctime>
+#include <conio.h>
 using namespace std;
 
 struct tm *local_time = NULL;
@@ -8,6 +9,7 @@ struct tm *local_time = NULL;
 class Tools {
 
 public:
+	// 时间的格式化输出
 	static void printTime(time_t timer) {
 		local_time = localtime(&timer);
 		printf("%d-%d-%d ", local_time->tm_year + 1900,
@@ -24,6 +26,113 @@ public:
 			printf("0");
 		}
 		printf("%d\n", local_time->tm_sec);
+	}
+
+	// 判断一个字符串是否全为数字
+	static bool isNumber(string str) {
+		for (int i = 0; i < str.size(); i++) {
+			if (!isdigit(str[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// 输入帐号, 只可以输入数字和字母
+	static bool inputAccount(char* account, int size) {
+		char c;
+		int count = 0;
+		while (((c = getch()) != '\r') && count < size - 1) {
+			if (c == ' ') {
+				continue;
+			}
+			if (c == 8) { // 退格
+				if (count == 0) {
+					continue;
+				}
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				count--;
+			}
+			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+				putchar(c);
+				account[count] = c;
+				count++;
+			}
+
+		}
+		account[count] = '\0';
+		cout << endl;
+		if (count >= USER_ACCOUNT_SIZE - 1) {
+			cout << "帐号太长啦 !" << endl;
+			return false;
+		}
+		return true;
+	}
+
+	// 输入密码, 隐藏字符, 打印*
+	static bool inputPassword(char* password, int size) {
+		char c;
+		int count = 0;
+		while (((c = getch()) != '\r') && count < size - 1) {
+			if (c == ' ') {
+				continue;
+			}
+			if (c == 8) { // 退格
+				if (count == 0) {
+					continue;
+				}
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				count--;
+			}
+			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+				putchar('*');
+				password[count] = c;
+				count++;
+			}
+		}
+		password[count] = '\0';
+		cout << endl;
+		if (count >= USER_PASSWORD_SIZE - 1) {
+			cout << "密码太长啦 !" << endl;
+			return false;
+		}
+		return true;
+	}
+
+	// 输入选择操作符, 最多输入两位, 且只能为数字
+	static void inputChoice(string &str) {
+		char c;
+		char temp[3];
+		int count = 0;
+		while ((c = getch()) != '\r') {
+			if (c == 8) {
+				if (count == 0) {
+					continue;
+				}
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				count--;
+			}
+			if (count == 2) {
+				continue;
+			}
+			if (c == ' ') {
+				continue;
+			}
+			if (c >= '0' && c <= '9') {
+				putchar(c);
+				temp[count] = c;
+				count++;
+			}
+		}
+		temp[count] = '\0';
+		str = temp;
+		cout << endl;
 	}
 
 	static void writeTestBooks() {

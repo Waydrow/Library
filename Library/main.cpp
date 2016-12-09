@@ -20,7 +20,7 @@ int main() {
 		while (true) {
 			string loginOption;
 			cout << "身份选择: 1.管理员 2.学生 3.退出" << endl << "请输入: ";
-			cin >> loginOption;
+			Tools::inputChoice(loginOption);
 			if (loginOption == "1") {
 				isAdminLogin = myLib.adminLogin();
 				if (isAdminLogin) {
@@ -60,7 +60,7 @@ int main() {
 				cout << "--------------------------------" << endl;
 
 				string adminOption;
-				cin >> adminOption;
+				Tools::inputChoice(adminOption);
 				if (adminOption == "1") {
 					myLib.addBook();
 				} else if (adminOption == "2") {
@@ -109,7 +109,7 @@ int main() {
 				cout << "--------------------------------" << endl;
 
 				string userOption;
-				cin >> userOption;
+				Tools::inputChoice(userOption);
 
 				/*
 				此处不可用switch case来判断, 因为c++中不支持case string
