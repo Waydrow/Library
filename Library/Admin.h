@@ -18,13 +18,34 @@ public:
 		strcpy(this->password, password);
 	}
 
+	Admin(int id, string account, string password) {
+		this->id = id;
+		strcpy(this->account, account.c_str());
+		strcpy(this->password, password.c_str());
+	}
+
 	Admin(char account[], char password[]) {
 		strcpy(this->account, account);
 		strcpy(this->password, password);
 	}
 
+	Admin(int id){
+        this->id = id;
+        strcpy(this->account, "");
+		strcpy(this->password, "");
+	}
+
 	Admin() {
 
+	}
+
+	void print() {
+		cout << "-------------------------------" << endl;
+		cout << "管理员信息如下：" << endl;
+		cout << "编号: " << getId() << endl;
+		cout << "账号: " << getAccount() << endl;
+		cout << "密码: " << "xxxxxxxx" << endl;
+		cout << "-------------------------------" << endl;
 	}
 
 	void setId(int id) {
