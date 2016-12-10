@@ -58,7 +58,7 @@ using namespace std;
 // 一次的借书期限 20s, 续借后+20s, 变为40s
 #define TIME_LIMITS				20
 
-
+const int book_size[3] = { BOOK_NAME_SIZE, BOOK_AUTHOR_SIZE, BOOK_INTRO_SIZE };
 
 struct Book {
 	// 自增, 唯一标识
@@ -87,6 +87,15 @@ struct Book {
 		strcpy(this->introduction, introduction);
 		this->canBorrow = BOOK_CAN_BORROW;
 	}
+
+	// string 参数的constructor
+	Book(int id, string name, string author, string introduction) {
+		this->id = id;
+		strcpy(this->name, name.c_str());
+		strcpy(this->author, author.c_str());
+		strcpy(this->introduction, introduction.c_str());
+		this->canBorrow = BOOK_CAN_BORROW;
+	}
 	//显示信息
 	void print() {
 		cout << "-------------------------------" << endl;
@@ -102,6 +111,7 @@ struct Book {
 		}
 		cout << "-------------------------------" << endl;
 	}
+	
 	//重载关系运算符
 	bool operator==(const Book &b) const {
 		if (this->id == b.id) {
@@ -215,9 +225,9 @@ private:
 			outFile.seekp(0, ios::beg);
 			Book aBook = Book(bookTotal);
 			outFile.write((char*)&aBook, BOOK_SIZE);
-			cout << "修改bookTotal成功" << endl;
+			// cout << "修改bookTotal成功" << endl;
 		} else {
-			cout << "修改bookTotal失败" << endl;
+			// cout << "修改bookTotal失败" << endl;
 		}
 		outFile.close();
 	}
@@ -229,9 +239,9 @@ private:
 			outFile.seekp(0, ios::beg);
 			User aUser = User(userTotal);
 			outFile.write((char*)&aUser, USER_SIZE);
-			cout << "修改userTotal成功" << endl;
+			// cout << "修改userTotal成功" << endl;
 		} else {
-			cout << "修改userTotal失败" << endl;
+			// cout << "修改userTotal失败" << endl;
 		}
 		outFile.close();
 	}
@@ -243,9 +253,9 @@ private:
 			outFile.seekp(0, ios::beg);
 			Borrow aBorrow = Borrow(borrowTotal);
 			outFile.write((char*)&aBorrow, BORROW_SIZE);
-			cout << "修改borrowTotal成功" << endl;
+			// cout << "修改borrowTotal成功" << endl;
 		} else {
-			cout << "修改borrowTotal失败" << endl;
+			// cout << "修改borrowTotal失败" << endl;
 		}
 		outFile.close();
 	}
@@ -255,7 +265,7 @@ private:
 		fstream iofile;
 		iofile.open(BOOK_FILE, ios::in | ios::out | ios::binary);
 		if (iofile.fail()) { // 打开失败则创建新文件, 并写入bookTotal
-			cout << "创建新的图书文件成功!" << endl;
+			// cout << "创建新的图书文件成功!" << endl;
 			iofile.close();
 			iofile.open(BOOK_FILE, ios::out | ios::binary);
 			Book aBook = Book(1);
@@ -263,7 +273,7 @@ private:
 			iofile.write((char*)&aBook, BOOK_SIZE);
 			iofile.close();
 		} else {
-			cout << "成功打开原有的图书文件!" << endl;
+			// cout << "成功打开原有的图书文件!" << endl;
 			// 移动到文件开头位置
 			iofile.seekg(0, ios::beg);
 			Book aBook;
@@ -280,7 +290,7 @@ private:
 		fstream iofile;
 		iofile.open(USER_FILE, ios::in | ios::out | ios::binary);
 		if (iofile.fail()) { // 打开失败则创建新文件, 并写入userTotal
-			cout << "创建新的用户文件成功!" << endl;
+			// cout << "创建新的用户文件成功!" << endl;
 			iofile.close();
 			iofile.open(USER_FILE, ios::out | ios::binary);
 			User aUser = User(1);
@@ -288,7 +298,7 @@ private:
 			iofile.write((char*)&aUser, USER_SIZE);
 			iofile.close();
 		} else {
-			cout << "成功打开原有的用户文件!" << endl;
+			// cout << "成功打开原有的用户文件!" << endl;
 			// 移动到文件开头位置
 			iofile.seekg(0, ios::beg);
 			User aUser;
@@ -305,7 +315,7 @@ private:
 		fstream iofile;
 		iofile.open(BORROW_FILE, ios::in | ios::out | ios::binary);
 		if (iofile.fail()) { // 打开失败则创建新文件, 并写入borrowTotal
-			cout << "创建新的借阅文件成功!" << endl;
+			// cout << "创建新的借阅文件成功!" << endl;
 			iofile.close();
 			iofile.open(BORROW_FILE, ios::out | ios::binary);
 			Borrow aBorrow = Borrow(1);
@@ -313,7 +323,7 @@ private:
 			iofile.write((char*)&aBorrow, BORROW_SIZE);
 			iofile.close();
 		} else {
-			cout << "成功打开原有的借阅文件!" << endl;
+			// cout << "成功打开原有的借阅文件!" << endl;
 			// 移动到文件开头位置
 			iofile.seekg(0, ios::beg);
 			Borrow aBorrow;
@@ -444,14 +454,14 @@ private:
 	}
 
 	// 通过书名查询图书
-	vector<Book> searchBookByName(char* name) {
+	vector<Book> searchBookByName(string name) {
 		inFile.open(BOOK_FILE, ios::binary);
 		vector<Book> result;
 		if (inFile.is_open()) {
 			Book aBook;
 			inFile.seekg(BOOK_SIZE, ios::beg);
 			while (inFile.read((char*)&aBook, BOOK_SIZE)) {
-				if (strstr(aBook.name, name)) {
+				if (strstr(aBook.name, name.c_str())) {
 					result.push_back(aBook);
 				}
 			}
@@ -511,7 +521,7 @@ private:
 
 public:
 	Library() {
-        loadSystemBooks();
+		loadSystemBooks();
 		loadSystemUsers();
 		loadSystemBorrows();
 		this->isUserLogin = IS_USER_NOT_LOGIN;
@@ -519,11 +529,18 @@ public:
 
 	//增加图书
 	void addBook() {
-		cout << "请输入图书信息(书名 作者 简介)" << endl;
-		char name[BOOK_NAME_SIZE];
-		char author[BOOK_AUTHOR_SIZE];
-		char introduction[BOOK_INTRO_SIZE];
-		cin >> name >> author >> introduction;
+		cout << "请输入图书信息(书名(20位) 作者(20位) 简介(50位))" << endl;
+		string name, author, introduction;
+		if (!Tools::inputBookName(name, BOOK_NAME_SIZE)) {
+			return;
+		}
+		if (!Tools::inputBookAuthor(author, BOOK_AUTHOR_SIZE)) {
+			return;
+		}
+		if (!Tools::inputBookIntro(introduction, BOOK_INTRO_SIZE)) {
+			return;
+		}
+		
 		Book new_book = Book(bookTotal, name, author, introduction);
 		writeBookFile(new_book, bookTotal);
 
@@ -548,26 +565,41 @@ public:
 		inFile.close();
 	}
 
-
 	//删除图书
 	void removeBook() {
-		cout << "请输入要删除的图书编号：";
+		Book old_book;
 		int num;
-		cin >> num;
-		Book old_book = searchBookById(num);//通过编号找到这本书的记录
-		if (old_book.id == ID_NOT_FOUND) {
-			cout << "未找到对应的书, 请重试 !" << endl;
-			return;
-		}
-		if (old_book.canBorrow == BOOK_CANNOT_BORROW) {
-			cout << "这本书被借走了, 暂时不能删除哦 !" << endl;
-			return;
+		while (true) {
+			cout << "请输入要删除的图书编号(输入0返回)：";
+			Tools::inputBookNum(num);
+			if (num == -1) {
+				continue;
+			}
+			if (num == 0) {
+				return;
+			}
+			old_book = searchBookById(num);//通过编号找到这本书的记录
+			if (old_book.id == ID_NOT_FOUND) {
+				cout << "未找到对应的书, 请重试 !" << endl;
+				continue;
+			}
+			if (old_book.canBorrow == BOOK_CANNOT_BORROW) {
+				cout << "这本书被借走了, 暂时不能删除哦 !" << endl;
+				continue;
+			}
+			break;
 		}
 		cout << "您即将删除这本书的所有信息：" << endl;
 		old_book.print();
 		string choice;
-		cout << "确认删除这本书吗?(y/n): ";
-		cin >> choice;
+		while (true) {
+			cout << "确认删除这本书吗?(y/n): ";
+			Tools::inputConfirmYN(choice);
+			if (choice.empty()) {
+				continue;
+			}
+			break;
+		}
 		if (choice == "y" || choice == "Y") {
 			Book aBook = Book(ID_REMOVE, "\0", "\0", "\0");
 			writeBookFile(aBook, old_book.id);
@@ -577,30 +609,38 @@ public:
 
 	//借出图书
 	void lendBook() {
-		cout << "请输入要借的图书编号：";
 		int num;
-		cin >> num;
-		if (cin.fail()) {
-			cerr << "无效的输入!\n";
-			cin.clear();
-			// 清空输入缓冲区
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');
-			return;
-		}
-		//通过编号找到这本书的记录
-		Book old_book = searchBookById(num);
-		if (old_book.id == ID_NOT_FOUND) {
-			cout << "未找到对应的书, 请重试 !" << endl;
-			return;
-		}
-		old_book.print();
-		if (old_book.canBorrow == BOOK_CANNOT_BORROW) {
-			cout << "这本书已经被别人借走啦！" << endl;
-			return;
+		Book old_book;
+		while (true) {
+			cout << "请输入要借的图书编号(输入0返回)：";
+			Tools::inputBookNum(num);
+			if (num == -1) {
+				continue;
+			}
+			if (num == 0) {
+				return;
+			}
+			old_book = searchBookById(num);//通过编号找到这本书的记录
+			if (old_book.id == ID_NOT_FOUND) {
+				cout << "未找到对应的书, 请重试 !" << endl;
+				continue;
+			}
+			if (old_book.canBorrow == BOOK_CANNOT_BORROW) {
+				cout << "这本书已经被别人借走啦 !" << endl;
+				continue;
+			}
+			break;
 		}
 		string flag;
-		cout << "确认借这本书吗?(y/n): ";
-		cin >> flag;
+		old_book.print();
+		while (true) {
+			cout << "确认借这本书吗?(y/n): ";
+			Tools::inputConfirmYN(flag);
+			if (flag.empty()) {
+				continue;
+			}
+			break;
+		}
 		if (flag == "y" || flag == "Y") {
 			old_book.canBorrow = BOOK_CANNOT_BORROW; // 图书状态标为借出
 			writeBookFile(old_book, old_book.id); // 写入到图书文件
@@ -616,13 +656,24 @@ public:
 	void displayOneUserBorrowHistory() {
 		vector<Borrow> borrows;
 		string account;
+		User old_user;
 		// 先判断是否为管理员登录, 是则先输入学号
 		if (!isUserLogin) {
-			cout << "请输入要查询的用户学号: ";
-			cin >> account;
-			if (account.size() >= USER_ACCOUNT_SIZE) {
-				cout << "输入的学号太长啦 !" << endl;
-				return;
+			while (true) {
+				cout << "请输入要查找的用户学号(输入0返回): ";
+				Tools::inputStuNum(account, USER_ACCOUNT_SIZE);
+				if (account.empty()) {
+					continue;
+				}
+				if (account == "0") {
+					return;
+				}
+				old_user = searchUserByAccount(account);
+				if (old_user.getId() == ID_NOT_FOUND) {
+					cout << "未找到对应的用户, 请重试 !" << endl;
+					continue;
+				}
+				break;
 			}
 		} else {
 			account = currentUser.getAccount();
@@ -643,62 +694,113 @@ public:
 
 	//修改图书
 	void changeBook() {
-		cout << "请输入要修改的图书编号：";
+		Book old_book;
 		int num;
-		cin >> num;
-		Book old_book = searchBookById(num);
-		if (old_book.id == ID_NOT_FOUND) {
-			cout << "未找到对应的书, 请重试 !" << endl;
-			return;
-		}
-		if (old_book.canBorrow == BOOK_CANNOT_BORROW) {
-			cout << "这本书被借走了, 暂时不能修改哦 !" << endl;
-			return;
+		while (true) {
+			cout << "请输入要修改的图书编号(输入0返回)：";
+			Tools::inputBookNum(num);
+			if (num == -1) {
+				continue;
+			}
+			if (num == 0) {
+				return;
+			}
+			old_book = searchBookById(num);//通过编号找到这本书的记录
+			if (old_book.id == ID_NOT_FOUND) {
+				cout << "未找到对应的书, 请重试 !" << endl;
+				continue;
+			}
+			if (old_book.canBorrow == BOOK_CANNOT_BORROW) {
+				cout << "这本书被借走了, 暂时不能修改哦 !" << endl;
+				continue;
+			}
+			break;
 		}
 		cout << "这是这本书的当前信息：" << endl;
 		//显示这本书之前的信息
 		old_book.print();
-		cout << "请输入修改后的图书信息（书名 作者 简介）" << endl;
-		/*
-		string name;
-		string author;
-		string introduction;
-		*/
-		char name[BOOK_NAME_SIZE];
-		char author[BOOK_AUTHOR_SIZE];
-		char introduction[BOOK_INTRO_SIZE];
-		cin >> name >> author >> introduction;
-		Book new_book = Book(old_book.id, name, author, introduction);
-		// 写入文件
-		writeBookFile(new_book, old_book.id);
-		cout << "这本书的信息已修改为：" << endl;
-		new_book.print();
+		while (true) {
+			cout << "请输入要进行的操作: 1.修改书名 2.修改作者 3.修改简介 0.返回" << endl;
+			string choice;
+			Tools::inputChoice(choice);
+			if (choice == "1") {
+				string name;
+				if (!Tools::inputBookName(name, BOOK_NAME_SIZE)) {
+					continue;
+				}
+				Book new_book = Book(old_book.id, name, old_book.author, old_book.introduction);
+				// 写入文件
+				writeBookFile(new_book, old_book.id);
+				cout << "书名修改成功" << endl;
+				new_book.print();
+				old_book = new_book;
+			} else if (choice == "2") {
+				string author;
+				if (!Tools::inputBookAuthor(author, BOOK_AUTHOR_SIZE)) {
+					continue;
+				}
+				Book new_book = Book(old_book.id, old_book.name, author, old_book.introduction);
+				// 写入文件
+				writeBookFile(new_book, old_book.id);
+				cout << "作者修改成功" << endl;
+				new_book.print();
+				old_book = new_book;
+			} else if (choice == "3") {
+				string intro;
+				if (!Tools::inputBookIntro(intro, BOOK_INTRO_SIZE)) {
+					continue;
+				}
+				Book new_book = Book(old_book.id, old_book.name, old_book.author, intro);
+				// 写入文件
+				writeBookFile(new_book, old_book.id);
+				cout << "简介修改成功" << endl;
+				new_book.print();
+				old_book = new_book;
+			} else if (choice == "0") {
+				return;
+			} else {
+				continue;
+			}
+		}
 	}
 
 	//归还图书
 	void backBook() {
-		cout << "请输入要归还的图书编号：";
 		int num;
-		cin >> num;
-		//通过编号找到这本书的记录
-		Book old_book = searchBookById(num);
-		if (old_book.id == ID_NOT_FOUND) {
-			cout << "未找到对应的书, 请重试 !" << endl;
-			return;
+		Book old_book;
+		Borrow aBorrow;
+		while (true) {
+			cout << "请输入要归还的图书编号(输入0返回)：";
+			Tools::inputBookNum(num);
+			if (num == -1) {
+				continue;
+			}
+			if (num == 0) {
+				return;
+			}
+			old_book = searchBookById(num);//通过编号找到这本书的记录
+			if (old_book.id == ID_NOT_FOUND) {
+				cout << "未找到对应的书, 请重试 !" << endl;
+				continue;
+			}
+			string account = currentUser.getAccount();
+			aBorrow = queryBorrowByUserAndBook(account, num);
+			if (old_book.canBorrow == BOOK_CAN_BORROW || aBorrow.id == ID_NOT_FOUND) {
+				cout << "你还没有借过这本书哦 !" << endl;
+				continue;
+			}
+			break;
 		}
-		if (old_book.canBorrow == BOOK_CAN_BORROW) {
-			cout << "这本书还未被借出哦 !" << endl;
-			return;
-		}
-		string account = currentUser.getAccount();
-		Borrow aBorrow = queryBorrowByUserAndBook(account, num);
-		if (aBorrow.id == ID_NOT_FOUND) {
-			cout << "你还没有借过这本书哦 !" << endl;
-			return;
-		}
+
 		string flag;
-		cout << "确认归还这本书吗?(y/n): ";
-		cin >> flag;
+		while (true) {
+			cout << "确认归还这本书吗?(y/n): ";
+			Tools::inputConfirmYN(flag);
+			if (flag.empty()) {
+				continue;
+			}
+			break;
+		}
 		if (flag == "y" || flag == "Y") {
 			old_book.canBorrow = BOOK_CAN_BORROW;
 			writeBookFile(old_book, old_book.id);
@@ -713,32 +815,45 @@ public:
 
 	// 续借图书
 	void borrowAgain() {
-		cout << "请输入要续借的图书编号：";
 		int num;
-		cin >> num;
-		//通过编号找到这本书的记录
-		Book old_book = searchBookById(num);
-		if (old_book.id == ID_NOT_FOUND) {
-			cout << "未找到对应的书, 请重试 !" << endl;
-			return;
+		Book old_book;
+		Borrow aBorrow;
+		while (true) {
+			cout << "请输入要续借的图书编号(输入0返回)：";
+			Tools::inputBookNum(num);
+			if (num == -1) {
+				continue;
+			}
+			if (num == 0) {
+				return;
+			}
+			old_book = searchBookById(num);//通过编号找到这本书的记录
+			if (old_book.id == ID_NOT_FOUND) {
+				cout << "未找到对应的书, 请重试 !" << endl;
+				continue;
+			}
+			string account = currentUser.getAccount();
+			aBorrow = queryBorrowByUserAndBook(account, num);
+			if (old_book.canBorrow == BOOK_CAN_BORROW || aBorrow.id == ID_NOT_FOUND) {
+				cout << "你还没有借过这本书哦 !" << endl;
+				continue;
+			}
+			if (aBorrow.borrowAgainTimes == BORROW_AGAIN_LIMITS) {
+				cout << "每本书最多只可续借一次 !" << endl;
+				continue;
+			}
+			break;
 		}
-		if (old_book.canBorrow == BOOK_CAN_BORROW) {
-			cout << "这本书还未被借出哦 !" << endl;
-			return;
-		}
-		string account = currentUser.getAccount();
-		Borrow aBorrow = queryBorrowByUserAndBook(account, num);
-		if (aBorrow.id == ID_NOT_FOUND) {
-			cout << "你还没有借过这本书哦 !" << endl;
-			return;
-		}
-		if (aBorrow.borrowAgainTimes == BORROW_AGAIN_LIMITS) {
-			cout << "每本书最多只可续借一次 !" << endl;
-			return;
-		}
+
 		string flag;
-		cout << "确认续借这本书吗?(y/n): ";
-		cin >> flag;
+		while (true) {
+			cout << "确认续借这本书吗?(y/n): ";
+			Tools::inputConfirmYN(flag);
+			if (flag.empty()) {
+				continue;
+			}
+			break;
+		}
 		if (flag == "y" || flag == "Y") {
 			// 续借标志
 			aBorrow.isBack = IS_BORROW_AGAIN;
@@ -753,38 +868,67 @@ public:
 
 	// 用户查询图书
 	void userSearchBook() {
-		cout << "请输入要查询的图书名字: " << endl;
-		char nameInput[BOOK_NAME_SIZE];
-		cin >> nameInput;
-		if (strlen(nameInput) >= BOOK_NAME_SIZE) {
-			cout << "您输入的图书名太长了, 请重试 !" << endl;
-			return;
-		}
-		vector<Book> result = searchBookByName(nameInput);
-		if (!result.empty()) {
-			cout << "共搜索到符合的条件的 " << result.size() << " 本书" << endl;
-			for (vector<int>::size_type ix = 0; ix != result.size(); ix++) {
-				result[ix].print();
+		string nameInput;
+		vector<Book> result;
+		while (true) {
+			cout << "请输入要查询的图书名字(输入0返回): ";
+			getline(cin, nameInput);
+			nameInput = Tools::trim(nameInput);
+			if (nameInput.empty()) {
+				continue;
 			}
-		} else {
-			cout << "没找到对应的书" << endl;
+			if (nameInput == "0") {
+				return;
+			}
+			if (nameInput.size() >= BOOK_NAME_SIZE) {
+				cout << "您输入的图书名太长了, 请重试 !" << endl;
+				continue;
+			}
+			result = searchBookByName(nameInput);
+			if (result.empty()) {
+				cout << "没找到对应的书" << endl;
+				continue;
+			}
+			break;
+		}
+
+		cout << "共搜索到符合的条件的 " << result.size() << " 本书" << endl;
+		for (vector<int>::size_type ix = 0; ix != result.size(); ix++) {
+			result[ix].print();
 		}
 	}
 
 
 	// 管理员登录
 	bool adminLogin() {
-		cout << "请输入管理员帐号: " << endl;
-		char account[USER_ACCOUNT_SIZE];
-		if (!Tools::inputAccount(account, USER_ACCOUNT_SIZE)) {
+		string account;
+		while (true) {
+			cout << "请输入管理员帐号(输入0返回): " << endl;
+			Tools::inputAccount(account, USER_ACCOUNT_SIZE);
+			if (account.empty()) {
+				continue;
+			}
+			break;
+		}
+
+		if (account == "0") {
 			return false;
 		}
-		cout << "请输入管理员密码: " << endl;
-		char password[USER_PASSWORD_SIZE];
-		if (!Tools::inputPassword(password, USER_PASSWORD_SIZE)) {
+
+		string password;
+		while (true) {
+			cout << "请输入管理员密码(输入0返回): " << endl;
+			Tools::inputPassword(password, USER_PASSWORD_SIZE);
+			if (password.empty()) {
+				continue;
+			}
+			break;
+		}
+		if (password == "0") {
 			return false;
 		}
-		if (!strcmp(account, "222") && !strcmp(password, "222")) {
+
+		if (account == "222" && password == "222") {
 			cout << "登录成功 !" << endl;
 			return true;
 		} else {
@@ -792,18 +936,35 @@ public:
 			return false;
 		}
 	}
+
 	// 用户登录
 	bool userLogin() {
-		cout << "请输入学号: " << endl;
-		char account[USER_ACCOUNT_SIZE];
-		if (!Tools::inputAccount(account, USER_PASSWORD_SIZE)) {
+		string account;
+		while (true) {
+			cout << "请输入学号(输入0返回): " << endl;
+			Tools::inputStuNum(account, USER_PASSWORD_SIZE);
+			if (account.empty()) {
+				continue;
+			}
+			break;
+		}
+		if (account == "0") {
 			return false;
 		}
-		cout << "请输入用户密码: " << endl;
-		char password[USER_PASSWORD_SIZE];
-		if (!Tools::inputPassword(password, USER_PASSWORD_SIZE)) {
+
+		string password;
+		while (true) {
+			cout << "请输入用户密码(输入0返回): " << endl;
+			Tools::inputPassword(password, USER_PASSWORD_SIZE);
+			if (password.empty()) {
+				continue;
+			}
+			break;
+		}
+		if (password == "0") {
 			return false;
 		}
+
 		searchUserFileForLogin(account, password);
 		if (isUserLogin == IS_USER_LOGIN) {
 			// 查询超期图书
@@ -822,18 +983,14 @@ public:
 
 	//添加用户
 	void addUser() {
-		cout << "请输入用户信息(学号, 密码, 姓名)(每项少于20位)" << endl;
-		char account[USER_ACCOUNT_SIZE];
-		char password[USER_PASSWORD_SIZE];
+		cout << "请输入用户信息(学号, 密码, 姓名)" << endl;
+		string account, password;
 		string name;
 		User new_user;
 		while (true) {
 			cout << "请输入学号(输入0返回): ";
-			if (!Tools::inputAccount(account, USER_ACCOUNT_SIZE)) {
-				continue;
-			}
-			if (!Tools::isNumber(account)) {
-				cout << "学号只能输入数字哦 !" << endl;
+			Tools::inputStuNum(account, USER_ACCOUNT_SIZE);
+			if (account.empty()) {
 				continue;
 			}
 			new_user = searchUserByAccount(account);
@@ -841,40 +998,59 @@ public:
 				cout << "学号已存在 !" << endl;
 				continue;
 			}
-			if (!strcmp(account, "0")) {
+			if (account == "0") {
 				return;
 			}
 			break;
 		}
 		while (true) {
 			cout << "请输入密码(不少于3位, 输入0返回): ";
-			if (!Tools::inputPassword(password, USER_PASSWORD_SIZE)) {
-				continue;
-			}
-			if (!strcmp(password, "0")) {
+			Tools::inputPassword(password, USER_PASSWORD_SIZE);
+
+			if (password == "0") {
 				return;
 			}
-			if(strlen(password) < 3) {
+			if (password.size() < 3) {
 				cout << "密码最少3位哦 !" << endl;
+				continue;
+			}
+
+			string confirm_password;
+			cout << "请确认密码(不少于3位, 输入0返回): ";
+			Tools::inputPassword(confirm_password, USER_PASSWORD_SIZE);
+
+			if (confirm_password == "0") {
+				return;
+			}
+			if (confirm_password.size() < 3) {
+				cout << "密码最少3位哦 !" << endl;
+				continue;
+			}
+			if (password != confirm_password) {
+				cout << "两次输入的密码不一致 !" << endl;
 				continue;
 			}
 			break;
 		}
-		name = "\n";
-		getline(cin, name);
+
+
 		while (true) {
 			cout << "请输入姓名(输入0返回): ";
 			getline(cin, name);
+			name = Tools::trim(name);
+			if (name.empty()) {
+				continue;
+			}
 			if (name == "0") {
 				return;
 			}
 			if (name.size() >= USER_NAME_SIZE) {
-				cout << "姓名太长啦 !" << endl;
+				cout << "名字太长啦" << endl;
 				continue;
 			}
 			break;
 		}
-		
+
 		new_user = User(userTotal, account, password, name);
 		writeUserFile(new_user, userTotal);
 		cout << "添加成功，信息如下：" << endl;
@@ -900,23 +1076,36 @@ public:
 
 	//删除用户
 	void removeUser() {
-		cout << "请输入要删除的用户学号：";
 		string account;
-		cin >> account;
-		if (account.size() >= USER_ACCOUNT_SIZE) {
-			cout << "学号输入太长啦 !" << endl;
-			return;
-		}
-		User old_user = searchUserByAccount(account);//通过学号找到这个用户的记录
-		if (old_user.getId() == ID_NOT_FOUND) {
-			cout << "未找到对应的用户, 请重试 !" << endl;
-			return;
+		User old_user;
+		while (true) {
+			cout << "请输入要删除的用户学号(输入0返回): ";
+			Tools::inputStuNum(account, USER_ACCOUNT_SIZE);
+			if (account.empty()) {
+				continue;
+			}
+			if (account == "0") {
+				return;
+			}
+			old_user = searchUserByAccount(account);
+			if (old_user.getId() == ID_NOT_FOUND) {
+				cout << "未找到对应的用户, 请重试 !" << endl;
+				continue;
+			}
+			break;
 		}
 		cout << "您即将删除这个用户的所有信息：" << endl;
 		old_user.print();
+
 		string choice;
-		cout << "确认删除这个用户吗?(y/n): ";
-		cin >> choice;
+		while (true) {
+			cout << "确认删除这个用户吗?(y/n): ";
+			Tools::inputConfirmYN(choice);
+			if (choice.empty()) {
+				continue;
+			}
+			break;
+		}
 		if (choice == "y" || choice == "Y") {
 			User aUser = User(ID_REMOVE);
 			writeUserFile(aUser, old_user.getId());
@@ -924,66 +1113,123 @@ public:
 		}
 	}
 
-
 	//修改用户
 	void changeUser() {
-		cout << "请输入要修改的用户学号：";
 		string account;
-		cin >> account;
-		if (account.size() >= USER_ACCOUNT_SIZE) {
-			cout << "学号太长啦 !" << endl;
-			return;
+		User old_user;
+		while (true) {
+			cout << "请输入要修改的用户学号(输入0返回): ";
+			Tools::inputStuNum(account, USER_ACCOUNT_SIZE);
+			if (account.empty()) {
+				continue;
+			}
+			if (account == "0") {
+				return;
+			}
+			old_user = searchUserByAccount(account);
+			if (old_user.getId() == ID_NOT_FOUND) {
+				cout << "未找到对应的用户, 请重试 !" << endl;
+				continue;
+			}
+			break;
 		}
-		User old_user = searchUserByAccount(account);
-		if (old_user.getId() == ID_NOT_FOUND) {
-			cout << "未找到对应的用户, 请重试 !" << endl;
-			return;
-		}
-
 		cout << "这是这个用户的当前信息：" << endl;
 		old_user.print();
-		cout << "请输入修改后的用户信息（密码 姓名）" << endl;
-		string password, name;
-		cin >> password >> name;
-		if (password.size() >= USER_PASSWORD_SIZE) {
-			cout << "密码太长啦 !" << endl;
-			return;
-		}
-		if (name.size() >= USER_NAME_SIZE) {
-			cout << "姓名太长啦 !" << endl;
-			return;
-		}
 
-		User new_user = User(old_user.getId(), account, password, name);
-		// 写入文件
-		writeUserFile(new_user, old_user.getId());
-		cout << "这个用户的信息已修改为：" << endl;
-		new_user.print();
+		while (true) {
+			User new_user = User(old_user.getId());
+			cout << "请输入要进行的操作: 1.修改密码 2.修改姓名 0.返回" << endl;
+			cout << "请输入: ";
+			string choice;
+			Tools::inputChoice(choice);
+			if (choice == "1") {
+				string new_password;
+				while (true) {
+					cout << "请输入密码(不少于3位, 输入0返回): ";
+					Tools::inputPassword(new_password, USER_PASSWORD_SIZE);
+
+					if (new_password == "0") {
+						break;
+					}
+					if (new_password.size() < 3) {
+						cout << "密码最少3位哦 !" << endl;
+						continue;
+					}
+					break;
+				}
+				string confirm_password;
+				while (true) {
+					cout << "确认密码(不少于3位, 输入0返回): ";
+					Tools::inputPassword(confirm_password, USER_PASSWORD_SIZE);
+
+					if (confirm_password == "0") {
+						break;
+					}
+					if (confirm_password.size() < 3) {
+						cout << "密码最少3位哦 !" << endl;
+						continue;
+					}
+					break;
+				}
+				if (new_password == confirm_password) {
+					new_user = User(old_user.getId(), account, new_password, old_user.getName());
+					writeUserFile(new_user, old_user.getId());
+					cout << "密码修改成功" << endl;
+					old_user = new_user; //为下一次修改做准备
+				} else {
+					cout << "两次输入的密码不一致, 请重试！" << endl;
+					continue;
+				}
+			} else if (choice == "2") {
+				string name;
+				while (true) {
+					cout << "请输入姓名(输入0返回): ";
+					getline(cin, name);
+					name = Tools::trim(name);
+					if (name.empty()) {
+						continue;
+					}
+					if (name == "0") {
+						return;
+					}
+					if (name.size() >= USER_NAME_SIZE) {
+						cout << "姓名太长啦!" << endl;
+						continue;
+					}
+					break;
+				}
+				new_user = User(old_user.getId(), account, old_user.getPassword(), name);
+				writeUserFile(new_user, old_user.getId());
+				cout << "姓名修改成功 !" << endl;
+				new_user.print();
+			} else if (choice == "0") {
+				return;
+			} else {
+				continue;
+			}
+		}
 	}
 
 	// 查询用户
 	void searchUser() {
-		char account[USER_ACCOUNT_SIZE];
+		string account;
+		User old_user;
 		while (true) {
 			cout << "请输入要查找的用户学号(输入0返回): ";
-			if (!Tools::inputAccount(account, USER_ACCOUNT_SIZE)) {
+			Tools::inputStuNum(account, USER_ACCOUNT_SIZE);
+			if (account.empty()) {
 				continue;
 			}
-			if (!Tools::isNumber(account)) {
-				cout << "学号只能输入数字哦 !" << endl;
-				continue;
-			}
-			if (!strcmp(account, "0")) {
+			if (account == "0") {
 				return;
+			}
+			old_user = searchUserByAccount(account);
+			if (old_user.getId() == ID_NOT_FOUND) {
+				cout << "未找到对应的用户, 请重试 !" << endl;
+				continue;
 			}
 			break;
 		}
-		User old_user = searchUserByAccount(account);
-		if (old_user.getId() == ID_NOT_FOUND) {
-			cout << "未找到对应的用户, 请重试 !" << endl;
-			return;
-		}
-
 		cout << "这是这个用户的当前信息：" << endl;
 		old_user.print();
 	}
@@ -1028,6 +1274,4 @@ public:
 		writeUserTotal();
 		cout << "共读入了 " << count << " 个用户" << endl;
 	}
-
-
 };

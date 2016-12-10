@@ -37,12 +37,144 @@ public:
 		}
 		return true;
 	}
+	
+	// 输入图书编号, 最多9位数字, 只能为数字
+	static void inputBookNum(int &num) {
+		char c;
+		char temp[10];
+		int count = 0;
+		while ((c = getch()) != '\r') {
+			if (c == 8) {
+				if (count == 0) {
+					continue;
+				}
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				count--;
+			}
+			if (count == 9) {
+				continue;
+			}
+			if (c == ' ') {
+				continue;
+			}
+			if (c >= '0' && c <= '9') {
+				putchar(c);
+				temp[count] = c;
+				count++;
+			}
+		}
+		temp[count] = '\0';
+		string str = temp;
+		str = trim(str);
+		if (str.empty()) {
+			num = -1;
+		} else {
+			num = atoi(temp);
+		}
+		cout << endl;
+	}
+	
+	// 输入图书名字
+	static bool inputBookName(string &name, int size) {
+		while (true) {
+			cout << "请输入书名(输入0返回): ";
+			getline(cin, name);
+			name = trim(name);
+			if (name.empty()) {
+				continue;
+			}
+			if (name == "0") {
+				return false;
+			}
+			if (name.size() >= size) {
+				cout << "书名太长啦 !" << endl;
+				continue;
+			}
+			break;
+		}
+		return true;
+	}
+
+	// 输入图书作者
+	static bool inputBookAuthor(string &author, int size) {
+		while (true) {
+			cout << "请输入作者(输入0返回): ";
+			getline(cin, author);
+			author = trim(author);
+			if (author.empty()) {
+				continue;
+			}
+			if (author == "0") {
+				return false;
+			}
+			if (author.size() >= size) {
+				cout << "作者名字太长啦 !" << endl;
+				continue;
+			}
+			break;
+		}
+		return true;
+	}
+
+	// 输入图书简介
+	static bool inputBookIntro(string &intro, int size) {
+		while (true) {
+			cout << "请输入简介(输入0返回): ";
+			getline(cin, intro);
+			intro = trim(intro);
+			if (intro.empty()) {
+				continue;
+			}
+			if (intro == "0") {
+				return false;
+			}
+			if (intro.size() >= size) {
+				cout << "简介太长啦 !" << endl;
+				continue;
+			}
+			break;
+		}
+		return true;
+	}
+
+	// 学生学号, 只可输入数字
+	static void inputStuNum(string &str, int size) {
+		char c;
+		char *temp = new char[size];
+		int count = 0;
+		while ((c = getch()) != '\r') {
+			if (c == 8) {
+				if (count == 0) {
+					continue;
+				}
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				count--;
+			} 
+			if (count == size - 1) {
+				continue;
+			} 
+			if(c >= '0' && c <= '9') {
+				putchar(c);
+				temp[count] = c;
+				count++;
+			}
+		}
+		temp[count] = '\0';
+		str = temp;
+		delete[] temp;
+		cout << endl;
+	}
 
 	// 输入帐号, 只可以输入数字和字母
-	static bool inputAccount(char* account, int size) {
+	static void inputAccount(string &str, int size) {
 		char c;
 		int count = 0;
-		while (((c = getch()) != '\r') && count < size - 1) {
+		char *account = new char[size];
+		while ((c = getch()) != '\r') {
 			if (c == ' ') {
 				continue;
 			}
@@ -54,6 +186,9 @@ public:
 				putchar(' ');
 				putchar('\b');
 				count--;
+			}
+			if (count == size - 1) {
+				continue;
 			}
 			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
 				putchar(c);
@@ -63,22 +198,18 @@ public:
 
 		}
 		account[count] = '\0';
+		str = account;
+		delete[] account;
 		cout << endl;
-		if (count >= USER_ACCOUNT_SIZE - 1) {
-			cout << "帐号太长啦 !" << endl;
-			return false;
-		}
-		return true;
 	}
 
 	// 输入密码, 隐藏字符, 打印*
-	static bool inputPassword(char* password, int size) {
+	static void inputPassword(string &str, int size) {
 		char c;
 		int count = 0;
-		while (((c = getch()) != '\r') && count < size - 1) {
-			if (c == ' ') {
-				continue;
-			}
+		char *password = new char[size];
+		while ((c = getch()) != '\r') {
+
 			if (c == 8) { // 退格
 				if (count == 0) {
 					continue;
@@ -88,6 +219,9 @@ public:
 				putchar('\b');
 				count--;
 			}
+			if (count == size - 1) {
+				continue;
+			}
 			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
 				putchar('*');
 				password[count] = c;
@@ -95,12 +229,9 @@ public:
 			}
 		}
 		password[count] = '\0';
+		str = password;
+		delete[] password;
 		cout << endl;
-		if (count >= USER_PASSWORD_SIZE - 1) {
-			cout << "密码太长啦 !" << endl;
-			return false;
-		}
-		return true;
 	}
 
 	// 输入选择操作符, 最多输入两位, 且只能为数字
@@ -133,6 +264,47 @@ public:
 		temp[count] = '\0';
 		str = temp;
 		cout << endl;
+	}
+
+	// 输入一位确认符, 只可输入Y,y,N,n, 0返回
+	static void inputConfirmYN(string &str) {
+		char c;
+		char temp[3];
+		int count = 0;
+		while ((c = getch()) != '\r') {
+			if (c == 8) {
+				if (count == 0) {
+					continue;
+				}
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				count--;
+			}
+			if (count == 1) {
+				continue;
+			}
+			if (c == ' ') {
+				continue;
+			}
+			if (c == 'y' || c == 'Y' || c == 'n' || c == 'N') {
+				putchar(c);
+				temp[count] = c;
+				count++;
+			}
+		}
+		temp[count] = '\0';
+		str = temp;
+		cout << endl;
+	}
+
+	// 实现 string 的trim函数, 删除前后空格
+	static string trim(string s) {
+		if (s.empty())
+			return s;
+		s.erase(0, s.find_first_not_of(" \t"));
+		s.erase(s.find_last_not_of(" \t") + 1);
+		return s;
 	}
 
 	static void writeTestBooks() {
