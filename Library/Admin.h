@@ -29,9 +29,9 @@ public:
 		strcpy(this->password, password);
 	}
 
-	Admin(int id){
-        this->id = id;
-        strcpy(this->account, "");
+	Admin(int id) {
+		this->id = id;
+		strcpy(this->account, "");
 		strcpy(this->password, "");
 	}
 
@@ -45,6 +45,12 @@ public:
 		cout << "编号: " << getId() << endl;
 		cout << "账号: " << getAccount() << endl;
 		cout << "密码: " << "xxxxxxxx" << endl;
+		cout << "权限: ";
+		if (id == 1) { // 为超级管理员
+			cout << "超级管理员" << endl;
+		} else {
+			cout << "普通管理员" << endl;
+		}
 		cout << "-------------------------------" << endl;
 	}
 

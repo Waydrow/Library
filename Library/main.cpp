@@ -93,14 +93,14 @@ int main() {
 				} else if (adminOption == "13") {
 					myLib.readTestUsers();
 				} else if (adminOption == "14") {
-				    myLib.addAdmin();
-                } else if (adminOption == "15") {
-                    myLib.changeAdmin();
-                } else if (adminOption == "16") {
-                    myLib.removeAdmin();
-                } else if (adminOption == "17") {
-                    myLib.displayAdmin();
-                } else if (adminOption == "0") {
+					myLib.addAdmin();
+				} else if (adminOption == "15") {
+					myLib.changeAdmin();
+				} else if (adminOption == "16") {
+					myLib.removeAdmin();
+				} else if (adminOption == "17") {
+					myLib.displayAdmin();
+				} else if (adminOption == "0") {
 					break;
 				} else {
 					continue;

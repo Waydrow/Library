@@ -37,7 +37,7 @@ public:
 		}
 		return true;
 	}
-	
+
 	// 输入图书编号, 最多9位数字, 只能为数字
 	static void inputBookNum(int &num) {
 		char c;
@@ -75,7 +75,7 @@ public:
 		}
 		cout << endl;
 	}
-	
+
 	// 输入图书名字
 	static bool inputBookName(string &name, int size) {
 		while (true) {
@@ -153,11 +153,11 @@ public:
 				putchar(' ');
 				putchar('\b');
 				count--;
-			} 
+			}
 			if (count == size - 1) {
 				continue;
-			} 
-			if(c >= '0' && c <= '9') {
+			}
+			if (c >= '0' && c <= '9') {
 				putchar(c);
 				temp[count] = c;
 				count++;
