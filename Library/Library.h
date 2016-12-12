@@ -5,6 +5,7 @@
 #include <vector>
 #include <limits>
 #include <ctime>
+#include <iomanip>
 #include <conio.h>
 #include "User.h"
 #include "Admin.h"
@@ -313,7 +314,7 @@ private:
 			bookTotal = aBook.id;
 			iofile.close();
 		}
-		cout << "系统初始化图书信息成功 !" << endl;
+		//cout << "系统初始化图书信息成功 !" << endl;
 	}
 
 	// 系统进行用户信息初始化
@@ -339,7 +340,7 @@ private:
 			userTotal = aUser.getId();
 			iofile.close();
 		}
-		cout << "系统初始化用户信息成功 !" << endl;
+		//cout << "系统初始化用户信息成功 !" << endl;
 	}
 
 	// 系统进行借阅信息初始化
@@ -365,7 +366,7 @@ private:
 			borrowTotal = aBorrow.id;
 			iofile.close();
 		}
-		cout << "系统初始化借阅信息成功 !" << endl;
+		//cout << "系统初始化借阅信息成功 !" << endl;
 	}
 
 	// 系统进行管理员信息初始化
@@ -391,7 +392,7 @@ private:
 			adminTotal = aAdmin.getId();
 			iofile.close();
 		}
-		cout << "系统初始化管理员信息成功 !" << endl;
+		//cout << "系统初始化管理员信息成功 !" << endl;
 	}
 
 	//写入图书文件
@@ -654,6 +655,15 @@ public:
 		this->isUserLogin = IS_USER_NOT_LOGIN;
 		this->isSuperLogin = IS_SUPER_NOT_LOGIN;
 		this->isAdminLogin = IS_ADMIN_NOT_LOGIN;
+		system("cls");
+		cout << setw(60) << "*******************************************" << endl;
+		cout << setw(60) << "*                                         *" << endl;
+		cout << setw(60) << "*                                         *" << endl;
+		cout << setw(60) << "*            图书管理系统V2.0             *" << endl;
+		cout << setw(60) << "*                第4小组                  *" << endl;
+		cout << setw(60) << "*                                         *" << endl;
+		cout << setw(60) << "*                                         *" << endl;
+		cout << setw(60) << "*******************************************" << endl;
 	}
 
 	//增加图书
@@ -1612,5 +1622,10 @@ public:
 		ifs.close();
 		writeUserTotal();
 		cout << "共读入了 " << count << " 个用户" << endl;
+	}
+
+	void generateData() {
+		readTestUsers();
+		readTestBooks();
 	}
 };
