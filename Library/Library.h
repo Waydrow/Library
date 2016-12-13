@@ -3,6 +3,7 @@
 #include <string>
 #include <string.h>
 #include <vector>
+#include <algorithm>
 #include <limits>
 #include <ctime>
 #include <iomanip>
@@ -480,7 +481,7 @@ private:
 		return aBorrow;
 	}
 
-	//以图书编号为依据进行查找图书信息
+	//以图书id为依据进行查找图书信息
 	Book searchBookById(int num) {
 		int flag = 0; // 0代表没查到, 1代表查到
 		inFile.open(BOOK_FILE, ios::binary);
@@ -500,6 +501,28 @@ private:
 			aBook.id = ID_NOT_FOUND;
 		}
 		return aBook;
+	}
+
+	// 以用户id为依据进行查找用户信息
+	User searchUserById(int num) {
+		int flag = 0;
+		User aUser;
+		inFile.open(USER_FILE, ios::binary);
+		if (inFile.is_open()) {
+			inFile.seekg(USER_SIZE, ios::beg);
+			while (inFile.read((char*)&aUser, USER_SIZE)) {
+				int id = aUser.getId();
+				if (id == num && aUser.getId() != ID_REMOVE) {
+					flag = 1;
+					break;
+				}
+			}
+		}
+		inFile.close();
+		if (flag == 0) {
+			aUser.setId(ID_NOT_FOUND);
+		}
+		return aUser;
 	}
 
 	// 以用户学号为依据进行查找用户信息
@@ -1624,8 +1647,69 @@ public:
 		cout << "共读入了 " << count << " 个用户" << endl;
 	}
 
+	// 随机生成借阅记录, 90个用户借阅990本图书, 每人最多借11本
 	void generateData() {
+		// 写入用户及图书的测试数据
 		readTestUsers();
 		readTestBooks();
+		int user[100];
+		// 90个用户借阅
+		int user_size = 90;
+		// 随机产生用户所在位置的数组
+		Tools::permutation(user_size, user);
+		/*
+		vector<int> vec;
+		for (int i = 0; i < 100; i++) {
+			vec.push_back(a[i]);
+		}
+		sort(vec.begin(), vec.end());
+		vector<int>::iterator it;
+		for (it = vec.begin(); it != vec.end(); it++) {
+			cout << *it << " ";
+		}
+		cout << endl;
+		*/
+
+		int book[1000];
+		// 借阅990本图书
+		int book_size = 990;
+		// 随机产生图书所在位置的数组
+		Tools::permutation(book_size, book);
+		
+		srand((unsigned)time(NULL));
+		int book_index = 0;
+		int borrow_count = 0;
+		for (int i = 0; i < user_size; i++) {
+			// 每人最多借11本
+			int ran = rand() % 11 + 1;
+			User aUser = searchUserById(user[i]);
+			if (aUser.getId() == ID_NOT_FOUND) { // 不存在该用户
+				continue;
+			}
+			for (int j = 0; j < ran; j++) {
+				Book aBook = searchBookById(book[book_index]);
+				if (aBook.id == ID_NOT_FOUND) { // 不存在该图书
+					book_index++;
+					continue;
+				}
+				Borrow aBorrow = Borrow(borrowTotal, aUser.getAccount(), aBook.id);
+				if (book[book_index] % 2 == 0) { // 书id为偶数则写入不归还记录
+					aBook.canBorrow = BOOK_CANNOT_BORROW;
+					writeBookFile(aBook, aBook.id);
+					writeBorrowFile(aBorrow, borrowTotal);
+				} else { // 书id为奇数则写入归还记录
+					aBorrow.isBack = IS_BACK;
+					aBorrow.backActualTime = time(NULL) + ran + 10;
+					writeBorrowFile(aBorrow, borrowTotal);
+				}
+				borrowTotal++;
+				writeBorrowTotal();
+				// 图书index ++
+				book_index++;
+				// 借阅记录数量++
+				borrow_count++;
+			}
+		}
+		cout << "共生成 " << borrow_count << " 条借阅记录" << endl;
 	}
 };

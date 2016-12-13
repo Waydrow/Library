@@ -337,4 +337,31 @@ public:
 		ofs.close();
 	}
 
+	// 生成随机数
+	static void permutation(int n, int *z_array) {
+		int i, j, k, z;
+		int* buffer = new int[n];
+
+		/* 初始化数组 */
+		for (i = 0; i<n; i++)
+			buffer[i] = 0;
+
+		/* 准备生成随机数,以当前时间为种子 */
+		srand((unsigned)time(NULL));
+
+		/* 获得不重复的随机数据 */
+		for (i = 0; i<n; i++) {
+			/* 获得0~（n-i）的随机数据 */
+			z = rand() % (n - i);
+			j = 0; k = 0;
+			while (j <= z) {
+				if (buffer[j + k] == 0) j++;
+				else k++;
+			}
+			buffer[j + k - 1] = 1;
+			z_array[i] = j + k - 1;
+		}
+		return;
+	}
+
 };
