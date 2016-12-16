@@ -1256,6 +1256,12 @@ public:
 				cout << "未找到对应的用户, 请重试 !" << endl;
 				continue;
 			}
+			vector<Borrow> borrows;
+			borrows = queryBorrowHistoryOneUser(account);
+			if (!borrows.empty()) {
+				cout << "当前用户存在未归还的书, 不能删除" << endl;
+				continue;
+			}
 			break;
 		}
 		cout << "您即将删除这个用户的所有信息：" << endl;
@@ -1373,6 +1379,7 @@ public:
 				}
 				new_user = User(old_user.getId(), account, old_user.getPassword(), name);
 				writeUserFile(new_user, old_user.getId());
+				old_user = new_user;
 				cout << "姓名修改成功 !" << endl;
 				new_user.print();
 			} else if (choice == "0") {

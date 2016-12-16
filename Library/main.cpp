@@ -9,8 +9,7 @@ bool isUserLogin;
 int isAdminLogin;
 
 int main() {
-	// Tools::writeTestBooks();
-	// Tools::writeTestUsers();
+
 	int flag = 1;
 	while (flag) {
 		flag = 1;
